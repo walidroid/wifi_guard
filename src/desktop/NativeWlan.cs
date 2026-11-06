@@ -245,3 +245,4 @@ namespace WiFiLabGuardian
         public static extern bool RefreshPolicyEx(bool bMachine, uint dwOptions);
     }
 }
+
