@@ -31,6 +31,11 @@ jobs:
           node-version: "20.18.0"
           architecture: "x64"
 
+      - name: 2b. Setup Python (v3.11 with distutils for node-gyp compatibility)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: 3. Install Dependencies (Deterministic)
         shell: cmd
         run: npm install --ignore-scripts
@@ -53,7 +58,7 @@ jobs:
         shell: cmd
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
-        run: npx electron-builder --config electron-builder.yml --win portable --x64 --publish never
+        run: npx electron-builder --config electron-builder.yml --win portable --x64 --publish never -c.npmRebuild=false
 
       - name: 7. Verify Output Portable Executable (WiFiLabGuardian.exe & Native Binary)
         shell: cmd
