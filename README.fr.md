@@ -8,7 +8,11 @@ Application Windows native **100% portable et autonome (~40 Ko)** destinée aux 
 
 L'application est allégée au maximum pour se concentrer sur les deux besoins fondamentaux en salle de classe :
 1. **Activer / Désactiver la Protection Wi-Fi** : Verrouille la connexion réseau sur le Wi-Fi autorisé de la salle et bloque / masque immédiatement tous les autres SSID (via les API Win32 Native WLAN `wlanapi.dll`).
-2. **Masquer / Afficher le Bouton Mode Avion** : Empêche les élèves de désactiver la carte Wi-Fi via l'application Paramètres de Windows 10/11.
+2. **Masquer & Neutraliser le Bouton Mode Avion** : 
+   - Supprime la tuile Mode Avion du menu réseau de la barre des tâches (`ActionCenter\Quick Actions\All`).
+   - Désactive et arrête le service de gestion radio Windows (`RmSvc`) pour empêcher toute coupure du Wi-Fi par touche clavier Fn ou bascule logicielle.
+   - Masque la page Mode Avion dans l'application Paramètres de Windows 10/11 (`SettingsPageVisibility`).
+   - Permet de recharger l'Explorateur Windows en 1 clic pour appliquer immédiatement les changements.
 
 ---
 

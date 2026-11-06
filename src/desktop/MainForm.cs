@@ -160,7 +160,7 @@ namespace WiFiLabGuardian
             // 3. Card 2 : Mode Avion
             grpAirplane = new GroupBox
             {
-                Text = " 2. Bouton Mode Avion (Paramètres Windows) ",
+                Text = " 2. Mode Avion (Barre des tâches, Clavier & Paramètres) ",
                 Location = new Point(16, 250),
                 Size = new Size(492, 136),
                 Font = new Font("Segoe UI", 9F, FontStyle.Bold),
@@ -169,7 +169,7 @@ namespace WiFiLabGuardian
 
             lblAirplaneStatus = new Label
             {
-                Text = "👁️ ÉTAT : VISIBLE dans les Paramètres Windows",
+                Text = "👁️ ÉTAT : VISIBLE & ACTIF (Les élèves peuvent couper le Wi-Fi)",
                 Location = new Point(16, 26),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
@@ -178,7 +178,7 @@ namespace WiFiLabGuardian
 
             lblAirplaneDesc = new Label
             {
-                Text = "Masquer le bouton empêche les élèves de couper la radio Wi-Fi via l'application Paramètres.",
+                Text = "Neutralise le service radio (RmSvc), retire le bouton du menu réseau de la barre des tâches et verrouille la coupure radio.",
                 Location = new Point(16, 52),
                 Size = new Size(460, 32),
                 Font = new Font("Segoe UI", 8.5F, FontStyle.Regular),
@@ -187,10 +187,10 @@ namespace WiFiLabGuardian
 
             btnToggleAirplaneMode = new Button
             {
-                Text = "🚫 MASQUER LE BOUTON MODE AVION",
+                Text = "🚫 MASQUER & DÉSACTIVER LE MODE AVION",
                 Location = new Point(16, 88),
                 Size = new Size(460, 36),
-                BackColor = Color.FromArgb(37, 99, 235),
+                BackColor = Color.FromArgb(220, 38, 38),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 9F, FontStyle.Bold),
@@ -276,19 +276,19 @@ namespace WiFiLabGuardian
                 _isAirplaneHidden = _controller.IsAirplaneModeHidden();
                 if (_isAirplaneHidden)
                 {
-                    lblAirplaneStatus.Text = "🚫 ÉTAT : MASQUÉ dans l'application Paramètres Windows";
+                    lblAirplaneStatus.Text = "🚫 ÉTAT : TOTALEMENT MASQUÉ & DÉSACTIVÉ";
                     lblAirplaneStatus.ForeColor = Color.FromArgb(220, 38, 38);
 
-                    btnToggleAirplaneMode.Text = "👁️ RÉAFFICHER LE BOUTON MODE AVION";
-                    btnToggleAirplaneMode.BackColor = Color.FromArgb(71, 85, 105);
+                    btnToggleAirplaneMode.Text = "👁️ RÉTABLIR LE BOUTON MODE AVION";
+                    btnToggleAirplaneMode.BackColor = Color.FromArgb(37, 99, 235);
                 }
                 else
                 {
-                    lblAirplaneStatus.Text = "👁️ ÉTAT : VISIBLE dans l'application Paramètres Windows";
-                    lblAirplaneStatus.ForeColor = Color.FromArgb(37, 99, 235);
+                    lblAirplaneStatus.Text = "👁️ ÉTAT : VISIBLE & ACTIF (Les élèves peuvent couper le Wi-Fi)";
+                    lblAirplaneStatus.ForeColor = Color.FromArgb(71, 85, 105);
 
-                    btnToggleAirplaneMode.Text = "🚫 MASQUER LE BOUTON MODE AVION";
-                    btnToggleAirplaneMode.BackColor = Color.FromArgb(37, 99, 235);
+                    btnToggleAirplaneMode.Text = "🚫 MASQUER & DÉSACTIVER LE MODE AVION";
+                    btnToggleAirplaneMode.BackColor = Color.FromArgb(220, 38, 38);
                 }
             }
             catch (Exception ex)
@@ -365,6 +365,17 @@ namespace WiFiLabGuardian
 
         private void ToggleAirplaneMode()
         {
+            if (!IsRunningAsAdmin())
+            {
+                MessageBox.Show(
+                    this,
+                    "Cette opération requiert des privilèges Administrateur.\nVeuillez relancer l'application en tant qu'administrateur.",
+                    "Droits Administrateur Requis",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
             string msg;
             this.Cursor = Cursors.WaitCursor;
 
@@ -376,14 +387,27 @@ namespace WiFiLabGuardian
 
                 if (ok)
                 {
-                    string infoMsg = nextHide
-                        ? "Le bouton Mode Avion est désormais MASQUÉ dans les Paramètres Windows."
-                        : "Le bouton Mode Avion est désormais VISIBLE dans les Paramètres Windows.";
-                    MessageBox.Show(infoMsg, "WiFi Lab Guardian", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    string infoTitle = nextHide ? "Mode Avion Masqué & Neutralisé" : "Mode Avion Rétabli";
+                    string promptRestart = nextHide
+                        ? "Le Mode Avion a été MASQUÉ et DÉSACTIVÉ avec succès !\n\n" +
+                          "• Service de gestion radio (RmSvc) : Désactivé\n" +
+                          "• Tuile menu réseau (Barre des tâches) : Retirée\n" +
+                          "• Raccourcis clavier (touches Fn) : Inopérants\n" +
+                          "• Paramètres Windows : Page Mode Avion masquée\n\n" +
+                          "Pour actualiser immédiatement le menu réseau de la barre des tâches sans redémarrer le PC, l'Explorateur Windows doit être rechargé.\n\n" +
+                          "Souhaitez-vous redémarrer l'Explorateur Windows maintenant (recommandé) ?"
+                        : "Le Mode Avion a été RÉTABLI avec succès !\n\n" +
+                          "Pour actualiser immédiatement l'affichage dans la barre des tâches, souhaitez-vous recharger l'Explorateur Windows maintenant ?";
+
+                    DialogResult dr = MessageBox.Show(this, promptRestart, infoTitle, MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+                    if (dr == DialogResult.Yes)
+                    {
+                        ProtectionController.RestartExplorer();
+                    }
                 }
                 else
                 {
-                    MessageBox.Show(msg, "WiFi Lab Guardian", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, msg, "WiFi Lab Guardian", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             finally

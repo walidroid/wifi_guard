@@ -8,7 +8,11 @@ A **100% portable, standalone Windows desktop application (~40 KB)** designed fo
 
 The application is completely streamlined to focus strictly on the two essential classroom requirements:
 1. **Enable / Disable Wi-Fi Protection**: Locks network access exclusively to the authorized classroom Wi-Fi and blocks/hides all other SSIDs via Win32 Native WLAN APIs (`wlanapi.dll`).
-2. **Hide / Show Airplane Mode Button**: Prevents students from turning off the Wi-Fi adapter via the Windows 10/11 Settings app.
+2. **Hide & Neutralize Airplane Mode**:
+   - Removes the Airplane Mode quick action tile from the taskbar network flyout (`ActionCenter\Quick Actions\All`).
+   - Stops and disables the Windows Radio Management Service (`RmSvc`) to prevent radio shutdown via Fn hotkeys or software toggles.
+   - Hides the Airplane Mode page in Windows 10/11 Settings (`SettingsPageVisibility`).
+   - Allows restarting Windows Explorer in 1 click to apply taskbar flyout changes immediately without rebooting.
 
 ---
 
