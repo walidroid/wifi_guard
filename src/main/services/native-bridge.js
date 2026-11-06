@@ -12,14 +12,20 @@ const fs = require('fs');
  */
 function loadNativeAddon(logger) {
   const candidatePaths = [
-    process.resourcesPath
-      ? path.join(process.resourcesPath, 'app.asar.unpacked', 'build', 'Release', 'wlan_native.node')
-      : null,
+    path.resolve(process.cwd(), 'native', 'wlan_native.node'),
+    path.resolve(process.cwd(), 'build', 'Release', 'wlan_native.node'),
+    path.resolve(process.cwd(), 'wlan_native.node'),
+    path.resolve(__dirname, '../../../build/Release/wlan_native.node'),
+    path.resolve(__dirname, '../../../build/Debug/wlan_native.node'),
+    path.resolve(__dirname, '../../native/wlan_native.node'),
+    path.resolve(__dirname, '../native/wlan_native.node'),
+    path.resolve(__dirname, 'wlan_native.node'),
     process.resourcesPath
       ? path.join(process.resourcesPath, 'native', 'wlan_native.node')
       : null,
-    path.resolve(__dirname, '../../../build/Release/wlan_native.node'),
-    path.resolve(__dirname, '../../../build/Debug/wlan_native.node')
+    process.resourcesPath
+      ? path.join(process.resourcesPath, 'app.asar.unpacked', 'build', 'Release', 'wlan_native.node')
+      : null
   ].filter(Boolean);
 
   let lastError = null;

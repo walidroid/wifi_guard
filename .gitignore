@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Local data & logs
+data/
+*.log
+*.tmp
+
+# Compilation outputs
+dist/
+bin/
+build/Release/
+build/Debug/
+WiFiLabGuardian.exe
+*.node
+

@@ -1,4 +1,4 @@
-name: Build WiFi Lab Guardian Portable EXE (Windows x64)
+name: Build WiFi Lab Guardian Standalone Installer (Windows x64)
 
 on:
   push:
@@ -17,8 +17,8 @@ permissions:
   contents: write
 
 jobs:
-  build-windows-x64:
-    name: Compile C++ Native Addon & Package Portable EXE
+  build-installer:
+    name: Build Standalone C# / Node.js Inno Setup Installer
     runs-on: windows-2022
 
     steps:
@@ -31,16 +31,16 @@ jobs:
           node-version: "20.18.0"
           architecture: "x64"
 
-      - name: 2b. Setup Python (v3.11 with distutils for node-gyp compatibility)
+      - name: 3. Setup Python (v3.11 for node-gyp compatibility)
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: 3. Install Dependencies (Deterministic)
+      - name: 4. Install Node Production & Build Dependencies
         shell: cmd
         run: npm install --ignore-scripts
 
-      - name: 4. Compile Native Windows C++ Addon (wlan_native.node for Electron x64)
+      - name: 5. Compile Native Windows C++ Addon (node-gyp rebuild)
         shell: cmd
         env:
           npm_config_arch: x64
@@ -48,48 +48,77 @@ jobs:
           GYP_MSVS_VERSION: "2022"
         run: |
           npx node-gyp rebuild --arch=x64
-          npx electron-rebuild -f -w wlan_native --arch=x64
+          if not exist "native" mkdir native
+          copy "build\Release\wlan_native.node" "native\wlan_native.node" /Y
 
-      - name: 5. Run Service & Backup Verification Suite
+      - name: 6. Run Service & Backup Verification Suite
         shell: cmd
         run: node tests/verify-services.js
 
-      - name: 6. Build Electron Application & Generate Portable Executable
-        shell: cmd
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: "false"
-        run: npx electron-builder --config electron-builder.yml --win portable --x64 --publish never -c.npmRebuild=false
+      - name: 7. Download Standalone node.exe (v20.18.0) for Target PCs
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path "bin" | Out-Null
+          $nodeUrl = "https://nodejs.org/dist/v20.18.0/win-x64/node.exe"
+          Write-Host "Téléchargement de node.exe v20 autonome depuis $nodeUrl ..."
+          Invoke-WebRequest -Uri $nodeUrl -OutFile "bin\node.exe"
+          if (Test-Path "bin\node.exe") {
+              $ver = & "bin\node.exe" -v
+              Write-Host "node.exe autonome téléchargé avec succès : $ver"
+          } else {
+              throw "Échec du téléchargement de bin\node.exe"
+          }
 
-      - name: 7. Verify Output Portable Executable (WiFiLabGuardian.exe & Native Binary)
+      - name: 8. Compile C# Desktop Native Controller with csc.exe
+        shell: powershell
+        run: |
+          powershell -ExecutionPolicy Bypass -File .\build-gui.ps1
+
+      - name: 9. Install Inno Setup 6
+        shell: powershell
+        run: |
+          choco install innosetup --no-progress
+
+      - name: 10. Build Standalone Installer with Inno Setup 6 (ISCC.exe)
+        shell: powershell
+        run: |
+          $isccPath = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $isccPath)) {
+              $isccPath = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
+          }
+          if (-not (Test-Path $isccPath)) {
+              $isccPath = (Get-Command ISCC.exe -ErrorAction Stop).Source
+          }
+          Write-Host "Compilation de l'installateur avec $isccPath ..."
+          & $isccPath installer.iss
+          if ($LASTEXITCODE -ne 0) {
+              throw "Échec de génération de l'installateur Inno Setup !"
+          }
+          Get-ChildItem -Path "dist"
+
+      - name: 11. Verify Output Installer (WiFi-Lab-Guardian-Setup-1.0.0.exe)
         shell: cmd
         run: |
-          if not exist "build\Release\wlan_native.node" (
-            echo ERROR: Native C++ addon build\Release\wlan_native.node was not produced!
+          if not exist "dist\WiFi-Lab-Guardian-Setup-1.0.0.exe" (
+            echo ERROR: Standalone installer was not produced!
             exit /b 1
           )
-          if not exist "dist\WiFiLabGuardian.exe" (
-            echo ERROR: Portable executable dist\WiFiLabGuardian.exe was not produced!
-            exit /b 1
-          )
-          dir "build\Release\wlan_native.node"
-          dir "dist\WiFiLabGuardian.exe"
+          dir "dist\WiFi-Lab-Guardian-Setup-1.0.0.exe"
 
-      - name: 8. Upload WiFiLabGuardian.exe Artifact
+      - name: 12. Upload Installer Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WiFiLabGuardian-Portable-win-x64
-          path: |
-            dist/WiFiLabGuardian.exe
-            build/Release/wlan_native.node
+          name: WiFi-Lab-Guardian-Setup-win-x64
+          path: dist/*.exe
           if-no-files-found: error
           retention-days: 90
 
-      - name: 9. Publish GitHub Release on Version Tag
+      - name: 13. Publish GitHub Release on Version Tag
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/WiFiLabGuardian.exe
+            dist/*.exe
             README.fr.md
             README.md
           generate_release_notes: true

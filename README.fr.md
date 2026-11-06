@@ -4,7 +4,11 @@ Application de bureau Windows 10 Pro (x64) destinée aux enseignants et administ
 
 ## 1. Architecture Technique & API Natives Windows 10 Pro
 
-L’application repose sur une architecture modulaire stricte combinant Electron et un module natif C++ (`native/wlan_native.cc`) compilé en N-API (`wlan_native.node`) qui appelle directement les bibliothèques système de Windows (`wlanapi.dll`, `advapi32.dll`, `userenv.dll`, `shell32.dll`) documentées dans l’en-tête [Wlanapi.h](https://learn.microsoft.com/en-us/windows/win32/api/wlanapi/) et la référence des [fonctions Native Wifi](https://learn.microsoft.com/en-us/windows/win32/nativewifi/native-wifi-functions) :
+L’application repose sur une architecture modulaire hybride ultra-légère :
+- **GUI Desktop Windows Native (C# .NET WinForms ~43 Ko)** : Shell de contrôle compilé via `csc.exe`, avec intégration complète dans la zone de notification Windows (System Tray), contrôle du cycle de vie sans fenêtre console/DOS noire, et élévation UAC native (`requireAdministrator`).
+- **Backend Local Hors-Ligne (Node.js Express REST & SSE ~4 Mo)** : Serveur local autonome appelant le module natif C++ (`native/wlan_native.cc` compilé en N-API `wlan_native.node`) qui invoque directement les bibliothèques système Windows (`wlanapi.dll`, `advapi32.dll`, `userenv.dll`, `shell32.dll`).
+- **Frontend Moderne (HTML5, Modern CSS3, Vanilla JS ~216 Ko)** : Interface adaptative et accessible via tout navigateur ou WebView local, 100% hors-ligne.
+- **Installateur Standalone Unique (~19 Mo)** : Généré avec **Inno Setup 6** en compression solide `lzma2/ultra64` embarquant `node.exe` v20 pour fonctionner sur tout PC cible sans dépendance préalable.
 
 | Fonctionnalité | API Win32 / Native C++ utilisée | Rôle technique exact |
 | :--- | :--- | :--- |
@@ -30,20 +34,21 @@ L’application repose sur une architecture modulaire stricte combinant Electron
 4. **Modèle de sécurité sur compte Windows partagé** :
    - Lorsque l’enseignant et les élèves partagent le même compte Windows, les stratégies par utilisateur ne peuvent pas les distinguer. Toutes les opérations d’administration dans **WiFi Lab Guardian** exigent une élévation **Windows UAC** (`ShellExecuteExW` avec le verbe `runas` et vérification `GetTokenInformation(TokenElevation)`). Aucun faux système de mot de passe interne n’est utilisé.
 
-## 3. Distribution Portable (`WiFiLabGuardian.exe`) et Fichiers Accompagnateurs
+## 3. Distribution & Installateur Standalone (~19 Mo)
 
-Le livrable final `WiFiLabGuardian.exe` est généré via **Electron Builder** avec la cible `portable` (`x64`) :
-- **Exécutable portable vs Binaire natif** : `WiFiLabGuardian.exe` est un exécutable portable autonome qui ne nécessite aucun installateur ni prérequis externe (Node.js, Python ou .NET ne sont pas requis sur les postes cibles).
-- Lors de son exécution, le conteneur portable extrait automatiquement l’environnement d’exécution Electron ainsi que la bibliothèque dynamique native compilée `wlan_native.node` (située dans `resources/app.asar.unpacked/build/Release/wlan_native.node` et `resources/native/wlan_native.node`) dans son répertoire temporaire d’exécution, tandis que la configuration persistante (`config.v2.json`), les sauvegardes (`backups/`) et les journaux (`logs/guardian.log`) sont stockés proprement dans `%APPDATA%\WiFiLabGuardian`.
+Le livrable final est compilé via **Inno Setup 6** avec compression solide `lzma2/ultra64` (`WiFi-Lab-Guardian-Setup-1.0.0.exe`) :
+- **Taille ultra-réduite (~19 Mo)** : En éliminant le moteur Chromium lourd (~70 Mo) au profit du shell Windows natif C# WinForms (~43 Ko) et du serveur Node.js compressé, l'empreinte mémoire et disque est drastiquement réduite.
+- **Fonctionnement 100% autonome** : L'installateur embarque le runtime `bin\node.exe` (v20 x64) et le module C++ compilé `wlan_native.node`. L'application fonctionne immédiatement sur tout poste Windows 10/11 sans nécessiter d'installation préalable de Node.js, Python ou d'accès Internet.
+- **Persistance & Sauvegardes** : La configuration persistante (`config.v2.json`), les sauvegardes réseau (`backups/`) et les journaux d'audit (`logs/guardian.log`) sont stockés de manière sécurisée dans `%APPDATA%\WiFiLabGuardian`.
 
 ## 4. Compilation Locale et CI/CD GitHub Actions
 
-Le fichier `.github/workflows/build.yml` compile automatiquement l’addon C++ et génère `WiFiLabGuardian.exe` sur un runner **Windows Server (`windows-2022`)** :
+Le workflow `.github/workflows/build.yml` compile automatiquement l'addon C++ natif avec `node-gyp`, compile `WiFiLabGuardian.exe` avec `csc.exe`, et génère l'installateur autonome Inno Setup :
 
 ```cmd
 npm install --ignore-scripts
 npx node-gyp rebuild --arch=x64
-npx electron-rebuild -f -w wlan_native --arch=x64
 node tests/verify-services.js
-npx electron-builder --config electron-builder.yml --win portable --x64
+powershell -ExecutionPolicy Bypass -File .\build-gui.ps1
+iscc installer.iss
 ```
