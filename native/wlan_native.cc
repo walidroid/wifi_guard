@@ -1103,14 +1103,14 @@ Napi::Value GetPolicyState(const Napi::CallbackInfo& info) {
   state.Set("hasNoNetSetup", has_no_net_setup);
   state.Set("noNetSetup", has_no_net_setup ? no_net_setup : 0);
 
-  // Query WLAN security descriptor for per-user profile creation (wlan_secure_user_profile)
+  // Query WLAN security descriptor for per-user profile creation (wlan_secure_add_new_per_user_profiles)
   ScopedWlanHandle wlan;
   if (wlan.IsValid()) {
     LPWSTR sddl_str = nullptr;
     WLAN_OPCODE_VALUE_TYPE val_type = wlan_opcode_value_type_invalid;
     DWORD granted = 0;
     if (WlanGetSecuritySettings(
-            wlan.get(), wlan_secure_user_profile, &val_type, &sddl_str,
+            wlan.get(), wlan_secure_add_new_per_user_profiles, &val_type, &sddl_str,
             &granted) == ERROR_SUCCESS &&
         sddl_str != nullptr) {
       state.Set("userProfileSddl", WideToUtf8(sddl_str));
@@ -1185,14 +1185,14 @@ Napi::Value ApplyPolicyState(const Napi::CallbackInfo& info) {
     }
   }
 
-  // 3) Optional: WlanSetSecuritySettings on wlan_secure_user_profile
+  // 3) Optional: WlanSetSecuritySettings on wlan_secure_add_new_per_user_profiles
   if (cfg.Has("userProfileSddl") && cfg.Get("userProfileSddl").IsString()) {
     std::string sddl = cfg.Get("userProfileSddl").As<Napi::String>().Utf8Value();
     if (!sddl.empty()) {
       ScopedWlanHandle wlan;
       if (wlan.IsValid()) {
         std::wstring wsddl = Utf8ToWide(sddl);
-        WlanSetSecuritySettings(wlan.get(), wlan_secure_user_profile, wsddl.c_str());
+        WlanSetSecuritySettings(wlan.get(), wlan_secure_add_new_per_user_profiles, wsddl.c_str());
       }
     }
   }

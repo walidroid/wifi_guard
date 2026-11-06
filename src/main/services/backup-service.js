@@ -13,7 +13,7 @@ const BACKUP_SCHEMA_VERSION = 2;
  *   - Original WLAN user permit & deny filter lists (`WlanGetFilterList`)
  *   - Original `wlan_autoconf_opcode_show_denied_networks` boolean state
  *   - Original Windows Registry values (`SettingsPageVisibility`, `NoNetSetup`)
- *   - Original `wlan_secure_user_profile` SDDL string
+ *   - Original `wlan_secure_add_new_per_user_profiles` SDDL string
  *   - Original software radio state
  *
  * Surgical Restoration Rule:

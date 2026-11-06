@@ -83,7 +83,7 @@ window.GUARDIAN_I18N = {
     enforcedItem2:
       'Masquage des réseaux refusés (WlanSetAutoConfigParameter) : Supprime les SSID bloqués de l’énumération réseau Windows.',
     chkLockUserProfiles:
-      'Verrouiller la création de nouveaux profils Wi-Fi personnels (WlanSetSecuritySettings sur wlan_secure_user_profile)',
+      'Verrouiller la création de nouveaux profils Wi-Fi personnels (WlanSetSecuritySettings sur wlan_secure_add_new_per_user_profiles)',
     chkAutoRestoreRadio:
       'Réactiver automatiquement la radio logicielle Wi-Fi si elle est coupée (WlanSetInterface)',
 
@@ -217,7 +217,7 @@ window.GUARDIAN_I18N = {
     enforcedItem2:
       'Hide Denied Networks (WlanSetAutoConfigParameter): Removes blocked SSIDs from Windows network enumeration.',
     chkLockUserProfiles:
-      'Lock creation of new per-user Wi-Fi profiles (WlanSetSecuritySettings on wlan_secure_user_profile)',
+      'Lock creation of new per-user Wi-Fi profiles (WlanSetSecuritySettings on wlan_secure_add_new_per_user_profiles)',
     chkAutoRestoreRadio:
       'Automatically re-enable software Wi-Fi radio if turned off (WlanSetInterface)',
 

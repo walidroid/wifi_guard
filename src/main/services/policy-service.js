@@ -9,7 +9,7 @@
  *  1. Kernel/Service Enforcement (Enforced by WlanSvc regardless of UI):
  *     - Native WLAN Permit/Deny Filters (`WlanSetFilterList`)
  *     - Hidden Denied Networks (`WlanSetAutoConfigParameter` with `wlan_autoconf_opcode_show_denied_networks`)
- *     - Per-User WLAN Profile Creation Lock (`WlanSetSecuritySettings` on `wlan_secure_user_profile`
+ *     - Per-User WLAN Profile Creation Lock (`WlanSetSecuritySettings` on `wlan_secure_add_new_per_user_profiles`)
  *       restricting `WLAN_WRITE_ACCESS` to Administrators `BA` and System `SY`)
  *  2. Interface Visibility Restrictions (UI Hiding in Windows 10 Settings / Control Panel):
  *     - `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer\SettingsPageVisibility`
