@@ -26,7 +26,7 @@ InfoBeforeFile=info.txt
 PrivilegesRequired=admin
 OutputDir=dist
 OutputBaseFilename=WiFi-Lab-Guardian-Setup-1.0.0
-SetupIconFile=build\icon.ico
+SetupIconFile=assets\icon.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -66,16 +66,17 @@ Source: "build\Release\wlan_native.node"; DestDir: "{app}\build\Release"; Flags:
 Source: "build\Release\wlan_native.node"; DestDir: "{app}\native"; Flags: ignoreversion skipifsourcedoesntexist
 
 ; Ressources visuelles & informations
-Source: "build\icon.ico"; DestDir: "{app}\build"; Flags: ignoreversion
+Source: "assets\icon.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
+Source: "assets\icon.svg"; DestDir: "{app}\assets"; Flags: ignoreversion
 Source: "info.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Dirs]
 Name: "{app}\data"; Permissions: users-full
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\build\icon.ico"
+Name: "{autoprograms}\{#MyAppName}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\assets\icon.ico"
 Name: "{autoprograms}\{#MyAppName}\Désinstaller {#MyAppName}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\build\icon.ico"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\assets\icon.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent

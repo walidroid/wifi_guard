@@ -9,8 +9,7 @@ data/
 # Compilation outputs
 dist/
 bin/
-build/Release/
-build/Debug/
+build/
 WiFiLabGuardian.exe
 *.node
 

@@ -21,7 +21,9 @@ Write-Host "==========================================================" -Foregro
 $sources = Get-ChildItem -Path "src\desktop\*.cs" | Select-Object -ExpandProperty FullName
 
 $iconParam = ""
-if (Test-Path "build\icon.ico") {
+if (Test-Path "assets\icon.ico") {
+    $iconParam = "/win32icon:assets\icon.ico"
+} elseif (Test-Path "build\icon.ico") {
     $iconParam = "/win32icon:build\icon.ico"
 }
 
