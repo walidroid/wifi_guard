@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WiFi Lab Guardian</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Fluent Left Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="brand-header">
+      <img src="assets/logo.svg" alt="WiFi Lab Guardian Logo" class="brand-logo" />
+      <div class="brand-titles">
+        <h1 data-i18n="appTitle">WiFi Lab Guardian</h1>
+        <span>Windows 10 Pro x64 • Native WLAN</span>
+      </div>
+    </div>
+
+    <ul class="nav-list">
+      <li class="nav-item active" data-view="dashboard">
+        <span>🛡️</span>
+        <span data-i18n="navDashboard">Tableau de bord</span>
+      </li>
+      <li class="nav-item" data-view="wifi-config">
+        <span>📶</span>
+        <span data-i18n="navWifiConfig">Configuration Wi-Fi</span>
+      </li>
+      <li class="nav-item" data-view="protection">
+        <span>🔒</span>
+        <span data-i18n="navProtection">Paramètres de protection</span>
+      </li>
+      <li class="nav-item" data-view="monitoring">
+        <span>📡</span>
+        <span data-i18n="navMonitoring">Surveillance réseau</span>
+      </li>
+      <li class="nav-item" data-view="backup">
+        <span>💾</span>
+        <span data-i18n="navBackup">Sauvegarde &amp; Restauration</span>
+      </li>
+      <li class="nav-item" data-view="sysinfo">
+        <span>🖥️</span>
+        <span data-i18n="navSystemInfo">Informations système</span>
+      </li>
+      <li class="nav-item" data-view="about">
+        <span>ℹ️</span>
+        <span data-i18n="navAbout">À propos</span>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div>Architecture : C++ N-API (wlanapi.dll)</div>
+      <div>Zéro PowerShell • Zéro CMD • Hors-ligne</div>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="main-container">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div id="adminBadge" class="privilege-badge standard">
+          <span id="adminBadgeText">Compte Standard (Lecture seule)</span>
+        </div>
+        <button id="btnElevateUac" class="btn btn-warning" style="padding: 6px 12px; font-size: 12px;">
+          🛡️ <span data-i18n="btnElevateUac">Élever les privilèges (UAC)</span>
+        </button>
+      </div>
+
+      <div class="topbar-actions">
+        <select id="langSelect" class="select-control" style="width: auto; padding: 6px 10px;">
+          <option value="fr">🇫🇷 Français (Par défaut)</option>
+          <option value="en">🇬🇧 English</option>
+        </select>
+        <button id="btnToggleTheme" class="btn btn-secondary" style="padding: 6px 12px;">
+          🌓 <span id="themeBtnLabel" data-i18n="themeLight">Thème Clair</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="content-area">
+      <!-- Feedback Toast Banner -->
+      <div id="toastBanner" class="toast-banner"></div>
+
+      <!-- =====================================================================
+           VIEW 1: DASHBOARD
+           ===================================================================== -->
+      <section id="view-dashboard" class="view-panel active">
+        <div class="hero-banner">
+          <div>
+            <div class="card-label" data-i18n="cardProtectionStatus">État actuel de la protection</div>
+            <h2 id="heroSsidTitle" style="font-size: 21px; margin-bottom: 4px;">WiFi Lab Guardian</h2>
+            <div id="heroSubText" class="card-sub" data-i18n="appSubtitle">
+              Administration et Protection Wi-Fi pour Laboratoires Windows 10 Pro
+            </div>
+          </div>
+          <div id="protectionStatusPill" class="status-pill unknown">
+            <span class="status-dot"></span>
+            <span id="protectionStatusText" data-i18n="statusUnknown">État inconnu</span>
+          </div>
+        </div>
+
+        <!-- 6 Core Status Cards -->
+        <div class="metrics-grid">
+          <div class="card">
+            <div class="card-label" data-i18n="cardWifiConnection">État de la connexion Wi-Fi</div>
+            <div id="dashConnState" class="card-value">—</div>
+            <div id="dashSignal" class="card-sub">—</div>
+          </div>
+
+          <div class="card">
+            <div class="card-label" data-i18n="cardConnectedSsid">SSID connecté</div>
+            <div id="dashConnectedSsid" class="card-value">—</div>
+            <div id="dashAllowedSsid" class="card-sub">—</div>
+          </div>
+
+          <div class="card">
+            <div class="card-label" data-i18n="cardAdapterName">Carte réseau Wi-Fi</div>
+            <div id="dashAdapterName" class="card-value">—</div>
+            <div id="dashAdapterGuid" class="card-sub">—</div>
+          </div>
+
+          <div class="card">
+            <div class="card-label" data-i18n="cardAdapterStatus">État de l’adaptateur &amp; Radio</div>
+            <div id="dashRadioState" class="card-value">—</div>
+            <div id="dashAutoconfState" class="card-sub">—</div>
+          </div>
+
+          <div class="card">
+            <div class="card-label" data-i18n="cardAirplaneMode">État du mode avion</div>
+            <div id="dashAirplaneState" class="card-value">—</div>
+            <div id="dashShowDeniedState" class="card-sub">—</div>
+          </div>
+
+          <div class="card">
+            <div class="card-label" data-i18n="cardLastUpdate">Dernière mise à jour de configuration</div>
+            <div id="dashLastUpdated" class="card-value">—</div>
+            <div id="dashDisconnectReason" class="card-sub">—</div>
+          </div>
+        </div>
+
+        <!-- Main Controls Card -->
+        <div class="card">
+          <div class="card-label" data-i18n="sectionMainControls">Commandes principales d’administration</div>
+          <div class="controls-bar">
+            <button id="btnEnableProtection" class="btn btn-primary">
+              🔒 <span data-i18n="btnEnableProtection">Activer la protection Wi-Fi</span>
+            </button>
+            <button id="btnDisableProtection" class="btn btn-danger">
+              🔓 <span data-i18n="btnDisableProtection">Désactiver la protection Wi-Fi</span>
+            </button>
+            <button id="btnRestoreOriginal" class="btn btn-warning">
+              ⏪ <span data-i18n="btnRestoreOriginal">Restaurer la configuration originale</span>
+            </button>
+            <button id="btnRefreshStatus" class="btn btn-secondary">
+              🔄 <span data-i18n="btnRefreshStatus">Actualiser l’état du réseau</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           VIEW 2: WI-FI CONFIGURATION (Features A & B)
+           ===================================================================== -->
+      <section id="view-wifi-config" class="view-panel">
+        <div class="card" style="margin-bottom: 18px;">
+          <h3 style="margin-bottom: 8px;" data-i18n="wifiConfigTitle">Configuration du réseau Wi-Fi du laboratoire</h3>
+          <p class="card-sub" style="margin-bottom: 16px;" data-i18n="wifiConfigDesc"></p>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="labelSelectAdapter">Adaptateur Wi-Fi cible :</label>
+              <select id="cfgAdapterSelect" class="select-control"></select>
+            </div>
+            <div class="form-group">
+              <label data-i18n="labelAuthorizedSsid">SSID autorisé du laboratoire :</label>
+              <input id="cfgSsidInput" type="text" class="input-control" placeholder="Ex: LAB_INFO_LYCEE" />
+            </div>
+            <div class="form-group">
+              <label data-i18n="labelProfileName">Nom du profil WLAN Windows :</label>
+              <input id="cfgProfileInput" type="text" class="input-control" placeholder="Ex: LAB_INFO_LYCEE" />
+            </div>
+          </div>
+
+          <div class="controls-bar" style="margin-bottom: 14px;">
+            <button id="btnUseCurrentSsid" class="btn btn-secondary" data-i18n="btnUseCurrentNetwork">
+              Utiliser le réseau actuellement connecté
+            </button>
+            <button id="btnImportXml" class="btn btn-secondary" data-i18n="btnImportXml">
+              Importer un profil XML WLAN...
+            </button>
+            <button id="btnScanNetworks" class="btn btn-secondary" data-i18n="btnScanNetworks">
+              Actualiser la liste des réseaux
+            </button>
+          </div>
+
+          <div class="checkbox-list">
+            <label class="checkbox-item">
+              <input type="checkbox" id="chkAutoConnect" checked />
+              <span data-i18n="chkAutoConnectStartup"></span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="chkReconnect" checked />
+              <span data-i18n="chkReconnectOnDisconnect"></span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="chkHideBlocked" checked />
+              <span data-i18n="chkHideBlockedNetworks"></span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="chkBlockAdhoc" checked />
+              <span data-i18n="chkBlockAdhoc"></span>
+            </label>
+          </div>
+
+          <div class="notice-box" data-i18n="noteDisconnectReality"></div>
+        </div>
+
+        <div class="card">
+          <h4 style="margin-bottom: 10px;" data-i18n="tableVisibleNetworks">Réseaux Wi-Fi détectés à proximité</h4>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th data-i18n="colSsid">SSID</th>
+                <th data-i18n="colProfile">Profil associé</th>
+                <th data-i18n="colSignal">Signal</th>
+                <th data-i18n="colSecurity">Sécurité</th>
+                <th data-i18n="colState">État</th>
+                <th data-i18n="colAction">Action</th>
+              </tr>
+            </thead>
+            <tbody id="networksTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           VIEW 3: PROTECTION SETTINGS (Features C, D & Security Model)
+           ===================================================================== -->
+      <section id="view-protection" class="view-panel">
+        <div class="card" style="margin-bottom: 18px;">
+          <h3 style="margin-bottom: 8px;" data-i18n="protectionSettingsTitle"></h3>
+          <p class="card-sub" style="margin-bottom: 14px;" data-i18n="protectionDistinctionTitle"></p>
+
+          <h4 style="color: var(--accent-cyan-bright); margin: 12px 0 8px;" data-i18n="enforcedSectionTitle"></h4>
+          <div class="notice-box">
+            <p style="margin-bottom: 6px;" data-i18n="enforcedItem1"></p>
+            <p data-i18n="enforcedItem2"></p>
+          </div>
+
+          <div class="checkbox-list">
+            <label class="checkbox-item">
+              <input type="checkbox" id="chkLockUserProfiles" />
+              <span data-i18n="chkLockUserProfiles"></span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="chkAutoRestoreRadio" checked />
+              <span data-i18n="chkAutoRestoreRadio"></span>
+            </label>
+          </div>
+
+          <h4 style="color: var(--status-orange); margin: 18px 0 8px;" data-i18n="uiHidingSectionTitle"></h4>
+          <div class="notice-box warning" data-i18n="uiHidingNotice"></div>
+
+          <div class="checkbox-list">
+            <label class="checkbox-item">
+              <input type="checkbox" id="chkHideWifiPage" checked />
+              <span data-i18n="chkHideWifiSettingsPage"></span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="chkHideAirplanePage" checked />
+              <span data-i18n="chkHideAirplanePage"></span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="chkNoNetSetup" checked />
+              <span data-i18n="chkNoNetSetup"></span>
+            </label>
+          </div>
+
+          <div class="controls-bar">
+            <button id="btnSavePolicies" class="btn btn-primary" data-i18n="btnSaveApplyPolicies">
+              Enregistrer et appliquer les restrictions
+            </button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 18px;">
+          <h4 style="margin-bottom: 8px; color: var(--status-orange);" data-i18n="airplaneLimitationTitle"></h4>
+          <p class="card-sub" style="line-height: 1.55;" data-i18n="airplaneLimitationBody"></p>
+        </div>
+
+        <div class="card">
+          <h4 style="margin-bottom: 8px;" data-i18n="sharedAccountTitle"></h4>
+          <p class="card-sub" style="line-height: 1.55;" data-i18n="sharedAccountBody"></p>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           VIEW 4: NETWORK MONITORING & DIAGNOSTIC LOGS
+           ===================================================================== -->
+      <section id="view-monitoring" class="view-panel">
+        <div class="card" style="margin-bottom: 18px;">
+          <h3 style="margin-bottom: 6px;" data-i18n="monitoringTitle"></h3>
+          <p class="card-sub" style="margin-bottom: 14px;" data-i18n="monitoringSubtitle"></p>
+
+          <h4 style="margin-bottom: 8px;" data-i18n="eventsListTitle"></h4>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Horodatage / Time</th>
+                <th>Source</th>
+                <th>Code</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody id="eventsTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h4 style="margin-bottom: 8px;" data-i18n="logsListTitle"></h4>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Horodatage / Time</th>
+                <th>Niveau / Level</th>
+                <th>Code</th>
+                <th>Message (Sans mot de passe / Redacted)</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           VIEW 5: BACKUP & RESTORE
+           ===================================================================== -->
+      <section id="view-backup" class="view-panel">
+        <div class="card">
+          <h3 style="margin-bottom: 6px;" data-i18n="backupTitle"></h3>
+          <p class="card-sub" style="margin-bottom: 16px;" data-i18n="backupSubtitle"></p>
+
+          <div class="controls-bar" style="margin-bottom: 16px;">
+            <button id="btnCreateManualBackup" class="btn btn-primary" data-i18n="btnCreateManualBackup">
+              Créer une sauvegarde maintenant
+            </button>
+            <button id="btnRestoreBaseline" class="btn btn-warning" data-i18n="btnRestoreOriginal">
+              Restaurer la configuration originale
+            </button>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th data-i18n="colBackupDate">Date et heure</th>
+                <th data-i18n="colBackupFile">Fichier (Schéma v2)</th>
+                <th data-i18n="colBackupType">Type</th>
+                <th data-i18n="colBackupDetails">Éléments sauvegardés</th>
+                <th data-i18n="colAction">Action</th>
+              </tr>
+            </thead>
+            <tbody id="backupsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           VIEW 6: SYSTEM INFORMATION
+           ===================================================================== -->
+      <section id="view-sysinfo" class="view-panel">
+        <div class="card">
+          <h3 style="margin-bottom: 6px;" data-i18n="sysInfoTitle"></h3>
+          <p class="card-sub" style="margin-bottom: 16px;" data-i18n="sysInfoSubtitle"></p>
+          <table class="data-table">
+            <tbody id="sysInfoTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           VIEW 7: ABOUT
+           ===================================================================== -->
+      <section id="view-about" class="view-panel">
+        <div class="card">
+          <h3 style="margin-bottom: 8px;" data-i18n="aboutTitle"></h3>
+          <p class="card-sub" style="margin-bottom: 16px; line-height: 1.6;" data-i18n="aboutDescription"></p>
+          <div class="notice-box">
+            <strong>Architecture Native Windows 10 Pro x64 :</strong>
+            <ul style="margin-top: 8px; padding-left: 20px; line-height: 1.7;">
+              <li>API Native Wifi (<code>wlanapi.dll</code>) : <code>WlanOpenHandle</code>, <code>WlanEnumInterfaces</code>, <code>WlanQueryInterface</code>, <code>WlanSetProfile</code>, <code>WlanSetProfilePosition</code>, <code>WlanSetFilterList</code>, <code>WlanSetAutoConfigParameter</code>, <code>WlanSetSecuritySettings</code>, <code>WlanRegisterNotification</code>.</li>
+              <li>API Registre &amp; Stratégies (<code>advapi32.dll</code> / <code>userenv.dll</code>) : <code>RegCreateKeyExW</code>, <code>RegSetValueExW</code>, <code>RefreshPolicyEx</code>.</li>
+              <li>Sécurité Electron : <code>contextIsolation: true</code>, <code>nodeIntegration: false</code>, <code>sandbox: true</code>.</li>
+              <li>Aucune exécution de PowerShell, CMD ou scripts externes.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# Protocole de Test et de Validation — WiFi Lab Guardian (Testing Documentation)
+
+Ce document décrit le protocole complet de validation sur une machine **Windows 10 Pro x64** propre (Section 13 du cahier des charges), ainsi que la suite de tests unitaires automatisés (`tests/verify-services.js`). Toutes les vérifications s’appuient sur les comportements documentés des API [Native Wifi (wlanapi.h)](https://learn.microsoft.com/en-us/windows/win32/api/wlanapi/).
+
+## 1. Vérification Automatisée Pré-Build (`tests/verify-services.js`)
+
+Exécutée automatiquement dans GitHub Actions (`.github/workflows/build.yml`) avant la création de `WiFiLabGuardian.exe` :
+
+* **Masquage des mots de passe Wi-Fi** : Vérifie que toute balise `<keyMaterial>` ou champ `passphrase` est remplacé par `[REDACTED]` dans `LoggerService` et supprimé dans `ConfigManager`.
+
+* **Sauvegarde et restauration chirurgicale** : Vérifie que `BackupService` sauvegarde les filtres préexistants ([WlanGetFilterList](https://learn.microsoft.com/en-us/windows/win32/api/wlanapi/nf-wlanapi-wlangetfilterlist)) ainsi que les valeurs préexistantes de [SettingsPageVisibility](https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-settings), et que la restauration rétablit exactement l’état initial sans supprimer les restrictions réseau préexistantes de l’établissement.
+
+## 2. Matrice de Validation sur Poste Windows 10 Pro x64
+
+| \# | Scénario de test | Procédure sur poste Windows 10 Pro x64 | Résultat attendu | 
+| ----- | ----- | ----- | ----- | 
+| **1** | **Connexion Wi-Fi initiale** | Lancer `WiFiLabGuardian.exe` connecté au réseau du laboratoire. | Le tableau de bord affiche le nom de l’adaptateur, le SSID connecté, la qualité du signal et l’état `Non protégé` (Rouge). | 
+| **2** | **Autorisation d’un seul SSID** | Sélectionner le SSID du laboratoire dans *Configuration Wi-Fi* et cliquer sur *Activer la protection Wi-Fi*. | Le module C++ appelle [WlanSetFilterList](https://learn.microsoft.com/en-us/windows/win32/api/wlanapi/nf-wlanapi-wlansetfilterlist) (`wlan_filter_list_type_user_permit`) pour autoriser uniquement ce SSID. Le statut passe à `Protégé` (Vert). | 
+| **3** | **Blocage et masquage des autres SSID** | Ouvrir le menu Wi-Fi de la barre des tâches Windows et tenter de voir ou rejoindre un partage de connexion mobile. | Les autres réseaux d’infrastructure sont bloqués via `wlan_filter_list_type_user_deny` et masqués de la liste via [WlanSetAutoConfigParameter](https://learn.microsoft.com/en-us/windows/win32/api/wlanapi/nf-wlanapi-wlansetautoconfigparameter) (`wlan_autoconf_opcode_show_denied_networks = FALSE`). | 
+| **4** | **Reconnexion automatique après déconnexion** | Avec la protection active, déconnecter manuellement le Wi-Fi. | `WlanRegisterNotification` ([Wlanapi.h](https://learn.microsoft.com/en-us/windows/win32/api/wlanapi/)) capte `wlan_notification_acm_disconnected` et `MonitoringService` appelle [WlanConnect](https://learn.microsoft.com/en-us/windows/win32/api/wlanapi/nf-wlanapi-wlanconnect) après le délai configuré (4 s par défaut). | 
+| **5** | **Respect de la désactivation par l’administrateur** | Cliquer sur *Désactiver la protection Wi-Fi*, puis se déconnecter du réseau. | L’application ne force **aucune** reconnexion automatique tant que la protection est désactivée. | 
+| **6** | **Persistance après redémarrage (Reboot)** | Redémarrer le poste Windows 10 Pro avec la protection active. | Les filtres `WlanSetFilterList`, le profil `<connectionMode>auto</connectionMode>`, la priorité 0 et les clés de registre `HKLM` persistent nativement dans Windows et reconnectent le poste dès le démarrage. | 
+| **7** | **Carte Wi-Fi désactivée / Radio coupée** | Désactiver la radio Wi-Fi logicielle ou désactiver l’adaptateur dans le Gestionnaire de périphériques. | Si la radio logicielle est coupée, [WlanSetInterface](https://learn.microsoft.com/en-us/windows/win32/api/wlanapi/nf-wlanapi-wlansetinterface) (`wlan_intf_opcode_radio_state`) la réactive. Si la carte est désactivée au niveau périphérique, l’interface affiche *« Carte Wi-Fi introuvable »*. | 
+| **8** | **Mode avion activé** | Activer le mode avion via un bouton matériel ou le Centre de notifications. | L’application lit `SystemRadioState` et [WLAN_PHY_RADIO_STATE](https://learn.microsoft.com/en-us/windows/win32/api/wlanapi/ns-wlanapi-wlan_phy_radio_state), affiche *« Mode avion détecté »* et indique la raison exacte de la coupure radio. | 
+| **9** | **Service WLAN indisponible (`WlanSvc`)** | Arrêter temporairement le service Windows `WlanSvc`. | `WlanOpenHandle` retourne le code d’erreur Win32 `ERROR_SERVICE_NOT_ACTIVE` ; l’interface passe à l’état Gris (*Inconnu*) et affiche *« Service WLAN indisponible »*. | 
+| **10** | **Sauvegarde et restauration chirurgicale** | Configurer au préalable une politique ou un filtre réseau tiers, activer la protection dans WiFi Lab Guardian, puis cliquer sur *Restaurer la configuration originale*. | L’état antérieur exact (profils, filtres préexistants, registre `SettingsPageVisibility`) est rétabli sans supprimer les restrictions préexistantes. | 
+| **11** | **Élévation UAC & Exécution portable sur un autre PC** | Copier `WiFiLabGuardian.exe` sur un second poste Windows 10 Pro x64 vierge (sans Node.js ni Python) et le lancer depuis un compte Standard. | L’invite Windows UAC s’affiche (ou le badge indique *Compte Standard* avec le bouton *Élever les privilèges (UAC)* via `ShellExecuteExW("runas")`). | 

@@ -1,0 +1,28 @@
+{
+  "name": "wifi-lab-guardian",
+  "productName": "WiFi Lab Guardian",
+  "version": "1.0.0",
+  "description": "Windows 10 Pro x64 Desktop Application for School Laboratory Wi-Fi Administration and Protection via Native Win32 WLAN APIs",
+  "main": "src/main/main.js",
+  "author": "WiFi Lab Guardian Engineering",
+  "license": "MIT",
+  "gypfile": true,
+  "scripts": {
+    "rebuild-native": "electron-rebuild -f -w wlan_native --arch=x64",
+    "start": "electron .",
+    "dist:portable": "electron-builder --config electron-builder.yml --win portable --x64",
+    "test:unit": "node tests/verify-services.js"
+  },
+  "dependencies": {
+    "node-addon-api": "8.3.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "3.7.1",
+    "electron": "33.2.0",
+    "electron-builder": "25.1.8",
+    "node-gyp": "10.2.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

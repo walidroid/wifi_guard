@@ -1,0 +1,92 @@
+name: Build WiFi Lab Guardian Portable EXE (Windows x64)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-x64:
+    name: Compile C++ Native Addon & Package Portable EXE
+    runs-on: windows-2022
+
+    steps:
+      - name: 1. Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 2. Setup Node.js LTS (v20.18.0 x64)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.18.0"
+          architecture: "x64"
+
+      - name: 3. Install Dependencies (Deterministic)
+        shell: cmd
+        run: npm install --ignore-scripts
+
+      - name: 4. Compile Native Windows C++ Addon (wlan_native.node for Electron x64)
+        shell: cmd
+        env:
+          npm_config_arch: x64
+          npm_config_target_arch: x64
+          GYP_MSVS_VERSION: "2022"
+        run: |
+          npx node-gyp rebuild --arch=x64
+          npx electron-rebuild -f -w wlan_native --arch=x64
+
+      - name: 5. Run Service & Backup Verification Suite
+        shell: cmd
+        run: node tests/verify-services.js
+
+      - name: 6. Build Electron Application & Generate Portable Executable
+        shell: cmd
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: npx electron-builder --config electron-builder.yml --win portable --x64 --publish never
+
+      - name: 7. Verify Output Portable Executable (WiFiLabGuardian.exe & Native Binary)
+        shell: cmd
+        run: |
+          if not exist "build\Release\wlan_native.node" (
+            echo ERROR: Native C++ addon build\Release\wlan_native.node was not produced!
+            exit /b 1
+          )
+          if not exist "dist\WiFiLabGuardian.exe" (
+            echo ERROR: Portable executable dist\WiFiLabGuardian.exe was not produced!
+            exit /b 1
+          )
+          dir "build\Release\wlan_native.node"
+          dir "dist\WiFiLabGuardian.exe"
+
+      - name: 8. Upload WiFiLabGuardian.exe Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WiFiLabGuardian-Portable-win-x64
+          path: |
+            dist/WiFiLabGuardian.exe
+            build/Release/wlan_native.node
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: 9. Publish GitHub Release on Version Tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/WiFiLabGuardian.exe
+            README.fr.md
+            README.md
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
