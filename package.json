@@ -13,13 +13,12 @@
     "dist:portable": "electron-builder --config electron-builder.yml --win portable --x64",
     "test:unit": "node tests/verify-services.js"
   },
-  "dependencies": {
-    "node-addon-api": "8.3.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@electron/rebuild": "3.7.1",
     "electron": "33.2.0",
     "electron-builder": "25.1.8",
+    "node-addon-api": "8.3.0",
     "node-gyp": "10.2.0"
   },
   "engines": {
