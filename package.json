@@ -2,25 +2,10 @@
   "name": "wifi-lab-guardian",
   "productName": "WiFi Lab Guardian",
   "version": "1.0.0",
-  "description": "Windows 10 Pro x64 Desktop Application for School Laboratory Wi-Fi Administration and Protection via Native Win32 WLAN APIs",
-  "main": "server.js",
+  "description": "Portable Windows Native Desktop Application for School Laboratory Wi-Fi Administration and Protection",
   "author": "WiFi Lab Guardian Engineering",
   "license": "MIT",
   "scripts": {
-    "start": "node server.js",
-    "build:gui": "powershell -ExecutionPolicy Bypass -File ./build-gui.ps1",
-    "rebuild:native": "node-gyp rebuild",
-    "test:unit": "node tests/verify-services.js"
-  },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "node-addon-api": "8.3.0"
-  },
-  "devDependencies": {
-    "node-gyp": "10.2.0"
-  },
-  "engines": {
-    "node": ">=20.0.0"
+    "build:portable": "powershell -ExecutionPolicy Bypass -File ./build-gui.ps1"
   }
 }

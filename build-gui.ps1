@@ -37,16 +37,17 @@ if (Test-Path "src\desktop\App.manifest") {
        /optimize+ `
        $manifestParam `
        $iconParam `
-       /r:System.dll,System.Windows.Forms.dll,System.Drawing.dll,System.Web.Extensions.dll `
+       /r:System.dll,System.Windows.Forms.dll,System.Drawing.dll `
        /out:WiFiLabGuardian.exe `
        $sources
 
 if ($LASTEXITCODE -eq 0 -and (Test-Path "WiFiLabGuardian.exe")) {
     $size = (Get-Item "WiFiLabGuardian.exe").Length
-    Write-Host "`n[SUCCÈS] Exécutable généré : WiFiLabGuardian.exe ($size octets)" -ForegroundColor Green
-    Write-Host "• Application : WiFi Lab Guardian (WinForms Native Shell)" -ForegroundColor Green
-    Write-Host "• Zéro console/DOS window (Sous-système Windows GUI natif)" -ForegroundColor Green
-    Write-Host "• Support System Tray & Contrôle WLAN intégrés" -ForegroundColor Green
+    Write-Host "`n[SUCCÈS] Exécutable portable généré : WiFiLabGuardian.exe ($size octets)" -ForegroundColor Green
+    Write-Host "• Application : WiFi Lab Guardian (Portable 100% Autonome)" -ForegroundColor Green
+    Write-Host "• Zéro installation • Zéro serveur • Zéro dépendance externe" -ForegroundColor Green
+    Write-Host "• 1. Activer / Désactiver la protection Wi-Fi du laboratoire" -ForegroundColor Green
+    Write-Host "• 2. Masquer / Afficher le bouton Mode Avion dans Windows" -ForegroundColor Green
 } else {
     Write-Host "`n[ERREUR] Échec de compilation C#." -ForegroundColor Red
     exit 1

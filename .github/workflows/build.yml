@@ -1,4 +1,4 @@
-name: Build WiFi Lab Guardian Standalone Installer (Windows x64)
+name: Build WiFi Lab Guardian Portable Executable (Windows x64)
 
 on:
   push:
@@ -17,108 +17,42 @@ permissions:
   contents: write
 
 jobs:
-  build-installer:
-    name: Build Standalone C# / Node.js Inno Setup Installer
-    runs-on: windows-2022
+  build-portable:
+    name: Compile Standalone Portable Executable (csc.exe)
+    runs-on: windows-latest
 
     steps:
       - name: 1. Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 2. Setup Node.js LTS (v20.18.0 x64)
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.18.0"
-          architecture: "x64"
-
-      - name: 3. Setup Python (v3.11 for node-gyp compatibility)
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: 4. Install Node Production & Build Dependencies
-        shell: cmd
-        run: npm install --ignore-scripts
-
-      - name: 5. Compile Native Windows C++ Addon (node-gyp rebuild)
-        shell: cmd
-        env:
-          npm_config_arch: x64
-          npm_config_target_arch: x64
-          GYP_MSVS_VERSION: "2022"
-        run: |
-          npx node-gyp rebuild --arch=x64
-          if not exist "native" mkdir native
-          copy "build\Release\wlan_native.node" "native\wlan_native.node" /Y
-
-      - name: 6. Run Service & Backup Verification Suite
-        shell: cmd
-        run: node tests/verify-services.js
-
-      - name: 7. Download Standalone node.exe (v20.18.0) for Target PCs
-        shell: powershell
-        run: |
-          New-Item -ItemType Directory -Force -Path "bin" | Out-Null
-          $nodeUrl = "https://nodejs.org/dist/v20.18.0/win-x64/node.exe"
-          Write-Host "Téléchargement de node.exe v20 autonome depuis $nodeUrl ..."
-          Invoke-WebRequest -Uri $nodeUrl -OutFile "bin\node.exe"
-          if (Test-Path "bin\node.exe") {
-              $ver = & "bin\node.exe" -v
-              Write-Host "node.exe autonome téléchargé avec succès : $ver"
-          } else {
-              throw "Échec du téléchargement de bin\node.exe"
-          }
-
-      - name: 8. Compile C# Desktop Native Controller with csc.exe
+      - name: 2. Compile Portable C# Executable with csc.exe
         shell: powershell
         run: |
           powershell -ExecutionPolicy Bypass -File .\build-gui.ps1
 
-      - name: 9. Install Inno Setup 6
-        shell: powershell
-        run: |
-          choco install innosetup --no-progress
-
-      - name: 10. Build Standalone Installer with Inno Setup 6 (ISCC.exe)
-        shell: powershell
-        run: |
-          $isccPath = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-          if (-not (Test-Path $isccPath)) {
-              $isccPath = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
-          }
-          if (-not (Test-Path $isccPath)) {
-              $isccPath = (Get-Command ISCC.exe -ErrorAction Stop).Source
-          }
-          Write-Host "Compilation de l'installateur avec $isccPath ..."
-          & $isccPath installer.iss
-          if ($LASTEXITCODE -ne 0) {
-              throw "Échec de génération de l'installateur Inno Setup !"
-          }
-          Get-ChildItem -Path "dist"
-
-      - name: 11. Verify Output Installer (WiFi-Lab-Guardian-Setup-1.0.0.exe)
+      - name: 3. Verify Output Portable Executable
         shell: cmd
         run: |
-          if not exist "dist\WiFi-Lab-Guardian-Setup-1.0.0.exe" (
-            echo ERROR: Standalone installer was not produced!
+          if not exist "WiFiLabGuardian.exe" (
+            echo ERROR: Portable executable WiFiLabGuardian.exe was not produced!
             exit /b 1
           )
-          dir "dist\WiFi-Lab-Guardian-Setup-1.0.0.exe"
+          dir "WiFiLabGuardian.exe"
 
-      - name: 12. Upload Installer Artifact
+      - name: 4. Upload Portable Executable Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WiFi-Lab-Guardian-Setup-win-x64
-          path: dist/*.exe
+          name: WiFiLabGuardian-Portable-win-x64
+          path: WiFiLabGuardian.exe
           if-no-files-found: error
           retention-days: 90
 
-      - name: 13. Publish GitHub Release on Version Tag
+      - name: 5. Publish GitHub Release on Version Tag
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/*.exe
+            WiFiLabGuardian.exe
             README.fr.md
             README.md
           generate_release_notes: true
